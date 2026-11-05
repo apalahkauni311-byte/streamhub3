@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cari Video - StreamHub</title>
+<meta name="description" content="Cari video favorit Anda di StreamHub secara realtime.">
+<meta property="og:title" content="Cari Video - StreamHub">
+<meta property="og:description" content="Cari video favorit Anda di StreamHub secara realtime.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="StreamHub">
+<meta property="og:locale" content="id_ID">
+<meta property="og:image" content="/icons/icon-512.png">
+<meta name="twitter:card" content="summary">
+<link rel="canonical" href="/search/">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0b0c10">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="/css/style.css?v=6">
+<script src="/js/notice-bar.js" defer></script>
+</head>
+<body class="site">
+<script src="/js/applock.js"></script>
+<a class="skip-link" href="#main">Lewati ke konten</a>
+
+<header class="site-header">
+  <div class="container">
+    <a href="/" class="logo">Stream<span>Hub</span></a>
+    <nav class="main-nav" aria-label="Menu utama">
+      <a href="/">Home</a>
+      <a href="/category/">Kategori</a>
+      <a href="/kerjasama/">Kerjasama</a>
+    </nav>
+    <div class="header-search" role="search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="search" id="quickSearch" placeholder="Cari video..." aria-label="Cari video" autocomplete="off">
+    </div>
+    <button class="mobile-menu-btn" id="mobileMenuBtn" type="button" aria-label="Buka halaman pencarian" tabindex="-1">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+    </button>
+    <button class="mobile-menu-btn" id="siteMenuBtn" type="button" aria-label="Menu lainnya" aria-haspopup="true" aria-expanded="false" aria-controls="siteMenuDropdown">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+    </button>
+  </div>
+</header>
+
+<div id="siteMenuDropdown" class="site-menu-dropdown">
+  <a href="/">Home</a>
+  <a href="/category/">Kategori</a>
+  <a href="/kerjasama/">Kerjasama &amp; Sponsor</a>
+  <a href="/privacy/">Kebijakan Privasi</a>
+  <a href="/terms/">Syarat &amp; Ketentuan</a>
+</div>
+
+<main class="container" id="main" tabindex="-1">
+  <section class="hero">
+    <h1>Cari Video</h1>
+    <p id="searchInfo" role="status" aria-live="polite">Ketik kata kunci untuk mulai mencari.</p>
+  </section>
+  <div class="field search-field">
+    <label class="sr-only" for="mainSearchInput">Judul atau kata kunci video</label>
+    <input type="search" id="mainSearchInput" placeholder="Judul atau kata kunci video..." autocomplete="off">
+  </div>
+  <div class="ad-slot" data-ad-placement="search_top"></div>
+  <div class="video-grid" id="resultGrid"></div>
+</main>
+
+<footer class="site-footer">
+  <div class="container">&copy; <span id="year"></span> StreamHub. Semua hak dilindungi. &middot; <a href="/privacy/">Kebijakan Privasi</a> &middot; <a href="/terms/">Syarat &amp; Ketentuan</a></div>
+</footer>
+
+<script src="/js/utils.js?v=6"></script>
+<script src="/js/site-config.js"></script>
+<script src="/js/site-menu.js"></script>
+<script src="/js/search.js"></script>
+<script src="/js/ads.js"></script>
+<script src="/js/pwa.js"></script>
+<script src="/js/push.js"></script>
+<script src="/js/tracker.js"></script>
+<script src="/js/cs-widget.js"></script>
+</body>
+</html>

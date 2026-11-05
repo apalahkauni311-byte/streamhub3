@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>404 - Halaman Tidak Ditemukan | StreamHub</title>
+<meta name="robots" content="noindex">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0b0c10">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="/css/style.css?v=6">
+<script src="/js/notice-bar.js" defer></script>
+</head>
+<body class="site">
+<script src="/js/applock.js"></script>
+<a class="skip-link" href="#main">Lewati ke konten</a>
+
+<header class="site-header">
+  <div class="container">
+    <a href="/" class="logo">Stream<span>Hub</span></a>
+    <nav class="main-nav" aria-label="Menu utama">
+      <a href="/">Home</a>
+      <a href="/category/">Kategori</a>
+      <a href="/kerjasama/">Kerjasama</a>
+    </nav>
+    <form class="header-search" action="/search/" method="get" role="search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="search" name="q" placeholder="Cari video..." aria-label="Cari video" autocomplete="off">
+    </form>
+    <button class="mobile-menu-btn" id="siteMenuBtn" type="button" aria-label="Menu lainnya" aria-haspopup="true" aria-expanded="false" aria-controls="siteMenuDropdown">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+    </button>
+  </div>
+</header>
+
+<div id="siteMenuDropdown" class="site-menu-dropdown">
+  <a href="/">Home</a>
+  <a href="/category/">Kategori</a>
+  <a href="/kerjasama/">Kerjasama &amp; Sponsor</a>
+  <a href="/privacy/">Kebijakan Privasi</a>
+  <a href="/terms/">Syarat &amp; Ketentuan</a>
+</div>
+
+<main class="not-found" id="main" tabindex="-1">
+  <h1>404</h1>
+  <p>Halaman yang Anda cari tidak ditemukan atau sudah dipindahkan.</p>
+  <a href="/" class="btn btn-primary">Kembali ke Home</a>
+</main>
+
+<footer class="site-footer">
+  <div class="container">&copy; <span id="year"></span> StreamHub. Semua hak dilindungi. &middot; <a href="/privacy/">Kebijakan Privasi</a> &middot; <a href="/terms/">Syarat &amp; Ketentuan</a></div>
+</footer>
+
+<script>document.getElementById("year").textContent = new Date().getFullYear();</script>
+<script src="/js/utils.js?v=6"></script>
+<script src="/js/site-config.js"></script>
+<script src="/js/site-menu.js"></script>
+</body>
+</html>

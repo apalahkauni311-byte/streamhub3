@@ -1,0 +1,198 @@
+-- ============================================================
+-- Schema database D1 untuk StreamHub
+-- AMAN dijalankan berkali-kali / di database yang sudah berisi data —
+-- semua perintah memakai "IF NOT EXISTS" sehingga tidak akan menghapus
+-- atau menimpa tabel/data yang sudah ada.
+--
+-- Jalankan dengan:
+--   wrangler d1 execute streaming_db --remote --file=./database/schema.sql
+-- ============================================================
+
+-- Admin yang bisa login ke dashboard
+CREATE TABLE IF NOT EXISTS admins (
+  id            INTEGER PRIMARY KEY AUTOINCREMENT,
+  username      TEXT NOT NULL UNIQUE,
+  password_hash TEXT NOT NULL,
+  salt          TEXT NOT NULL,
+  created_at    TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Sesi login admin (dipakai untuk cookie session + CSRF token)
+CREATE TABLE IF NOT EXISTS sessions (
+  id          TEXT PRIMARY KEY,
+  admin_id    INTEGER NOT NULL,
+  csrf_token  TEXT NOT NULL,
+  expires_at  TEXT NOT NULL,
+  created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+  FOREIGN KEY (admin_id) REFERENCES admins(id) ON DELETE CASCADE
+);
+
+-- Kategori video
+CREATE TABLE IF NOT EXISTS categories (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  name       TEXT NOT NULL,
+  slug       TEXT NOT NULL UNIQUE,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Video
+CREATE TABLE IF NOT EXISTS videos (
+  id            INTEGER PRIMARY KEY AUTOINCREMENT,
+  title         TEXT NOT NULL,
+  slug          TEXT NOT NULL UNIQUE,
+  description   TEXT DEFAULT '',
+  category_id   INTEGER,
+  embed_url     TEXT NOT NULL,
+  thumbnail_url TEXT DEFAULT '',
+  status        TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'published')),
+  views         INTEGER NOT NULL DEFAULT 0,
+  publish_date  TEXT,
+  telegram_posted INTEGER NOT NULL DEFAULT 0,
+  created_at    TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at    TEXT NOT NULL DEFAULT (datetime('now')),
+  FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
+);
+
+-- Log view untuk proteksi anti-spam refresh (rate limit view counter)
+CREATE TABLE IF NOT EXISTS view_logs (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  video_id   INTEGER NOT NULL,
+  ip_hash    TEXT NOT NULL,
+  viewed_at  TEXT NOT NULL DEFAULT (datetime('now')),
+  FOREIGN KEY (video_id) REFERENCES videos(id) ON DELETE CASCADE
+);
+
+-- Log percobaan login untuk rate limiting brute force
+CREATE TABLE IF NOT EXISTS login_attempts (
+  id            INTEGER PRIMARY KEY AUTOINCREMENT,
+  ip_hash       TEXT NOT NULL,
+  attempted_at  TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Zona iklan Adsterra (atau provider lain) yang dikelola lewat dashboard admin
+CREATE TABLE IF NOT EXISTS ad_zones (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  name         TEXT NOT NULL,
+  placement    TEXT NOT NULL,
+  code         TEXT NOT NULL,
+  enabled      INTEGER NOT NULL DEFAULT 1 CHECK (enabled IN (0, 1)),
+  impressions  INTEGER NOT NULL DEFAULT 0,
+  created_at   TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at   TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Index untuk performa query
+CREATE INDEX IF NOT EXISTS idx_ad_zones_placement ON ad_zones(placement, enabled);
+
+-- Langganan Push Notification (disimpan per browser/perangkat pengunjung)
+CREATE TABLE IF NOT EXISTS push_subscriptions (
+  endpoint     TEXT PRIMARY KEY,
+  p256dh       TEXT NOT NULL,
+  auth         TEXT NOT NULL,
+  created_at   TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Gambar thumbnail yang diupload langsung dari dashboard (disimpan sebagai base64 di D1,
+-- karena project ini sengaja tidak memakai Cloudflare R2 / storage file terpisah)
+CREATE TABLE IF NOT EXISTS uploads (
+  id            TEXT PRIMARY KEY,
+  content_type  TEXT NOT NULL,
+  data          TEXT NOT NULL,
+  created_at    TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Tracking perangkat pengunjung (anonim, berbasis ID acak di localStorage) untuk
+-- statistik jumlah install & status online/offline di dashboard admin
+CREATE TABLE IF NOT EXISTS devices (
+  device_id     TEXT PRIMARY KEY,
+  first_seen    TEXT NOT NULL DEFAULT (datetime('now')),
+  last_seen     TEXT NOT NULL DEFAULT (datetime('now')),
+  is_installed  INTEGER NOT NULL DEFAULT 0,
+  user_agent    TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_devices_last_seen ON devices(last_seen);
+
+-- Pengaturan situs yang bisa diubah lewat dashboard admin (key-value generik),
+-- mis. link customer service, label tombol, dll — tanpa perlu edit kode/deploy ulang.
+CREATE TABLE IF NOT EXISTS settings (
+  key         TEXT PRIMARY KEY,
+  value       TEXT NOT NULL DEFAULT '',
+  updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Kartu "Sponsor" yang menyatu di grid video (terpisah dari sistem Iklan/ad_zones
+-- yang berbasis kode script). Dipakai untuk endorse/sponsor langsung dari brand,
+-- lengkap dengan jadwal tanggal mulai & berakhir.
+CREATE TABLE IF NOT EXISTS sponsor_ads (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  name        TEXT NOT NULL,
+  title       TEXT NOT NULL,
+  image_url   TEXT NOT NULL,
+  link_url    TEXT NOT NULL,
+  start_date  TEXT NOT NULL,
+  end_date    TEXT NOT NULL,
+  enabled     INTEGER NOT NULL DEFAULT 1,
+  created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_sponsor_ads_dates ON sponsor_ads(start_date, end_date);
+CREATE INDEX IF NOT EXISTS idx_videos_status       ON videos(status);
+CREATE INDEX IF NOT EXISTS idx_videos_category     ON videos(category_id);
+CREATE INDEX IF NOT EXISTS idx_videos_views        ON videos(views DESC);
+CREATE INDEX IF NOT EXISTS idx_videos_publish_date ON videos(publish_date DESC);
+CREATE INDEX IF NOT EXISTS idx_videos_slug         ON videos(slug);
+CREATE INDEX IF NOT EXISTS idx_categories_slug     ON categories(slug);
+CREATE INDEX IF NOT EXISTS idx_view_logs_lookup    ON view_logs(video_id, ip_hash, viewed_at);
+CREATE INDEX IF NOT EXISTS idx_login_attempts_ip   ON login_attempts(ip_hash, attempted_at);
+CREATE INDEX IF NOT EXISTS idx_sessions_expires    ON sessions(expires_at);
+
+-- ============================================================
+-- Adsterra Revenue Dashboard (fitur baru, tidak mengubah tabel lain)
+-- ============================================================
+
+-- Cache statistik Adsterra. Satu baris per snapshot: untuk HARI INI, baris baru
+-- ditambahkan tiap kali sync berhasil (memberi data intraday untuk grafik 24 jam).
+-- Untuk hari-hari sebelumnya, baris di-upsert (1 baris final per tanggal).
+CREATE TABLE IF NOT EXISTS adsterra_stats (
+  id             INTEGER PRIMARY KEY AUTOINCREMENT,
+  date           TEXT NOT NULL,
+  revenue        REAL NOT NULL DEFAULT 0,
+  impressions    INTEGER NOT NULL DEFAULT 0,
+  clicks         INTEGER NOT NULL DEFAULT 0,
+  ctr            REAL NOT NULL DEFAULT 0,
+  cpm            REAL NOT NULL DEFAULT 0,
+  requests       INTEGER NOT NULL DEFAULT 0,
+  fill_rate      REAL NOT NULL DEFAULT 0,
+  json_response  TEXT,
+  updated_at     TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_adsterra_stats_date ON adsterra_stats(date, updated_at);
+
+-- Log setiap kali sync ke Adsterra API dilakukan (sukses maupun gagal)
+CREATE TABLE IF NOT EXISTS adsterra_sync_log (
+  id               INTEGER PRIMARY KEY AUTOINCREMENT,
+  synced_at        TEXT NOT NULL DEFAULT (datetime('now')),
+  response_time_ms INTEGER,
+  status           TEXT NOT NULL,
+  error_message    TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_adsterra_sync_log_time ON adsterra_sync_log(synced_at);
+
+-- Iklan Pre-Roll (tampil sebelum video mulai, mirip iklan YouTube, bisa di-skip)
+CREATE TABLE IF NOT EXISTS preroll_ads (
+  id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+  name                TEXT NOT NULL,
+  ad_type             TEXT NOT NULL DEFAULT 'image' CHECK (ad_type IN ('video', 'image')),
+  media_url           TEXT NOT NULL,
+  link_url            TEXT,
+  skip_after_seconds  INTEGER NOT NULL DEFAULT 5,
+  enabled             INTEGER NOT NULL DEFAULT 1,
+  start_date          TEXT NOT NULL,
+  end_date            TEXT NOT NULL,
+  created_at          TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_preroll_ads_dates ON preroll_ads(start_date, end_date, enabled);
