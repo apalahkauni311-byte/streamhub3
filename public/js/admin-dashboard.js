@@ -41,7 +41,7 @@
       tabPanels[key].style.display = key === tab ? "" : "none";
     });
     topbarTitle.textContent = titles[tab] || "Dashboard";
-    document.querySelectorAll(".admin-nav a").forEach((a) => a.classList.toggle("active", a.dataset.tab === tab));
+    document.querySelectorAll(".admin-nav a[data-tab]").forEach((a) => a.classList.toggle("active", a.dataset.tab === tab));
     document.querySelectorAll("#mobileTabs button").forEach((b) => b.classList.toggle("active", b.dataset.tab === tab));
     if (tab === "dashboard") {
       loadStats();
@@ -69,7 +69,7 @@
     }
   }
 
-  document.querySelectorAll(".admin-nav a").forEach((a) => {
+  document.querySelectorAll(".admin-nav a[data-tab]").forEach((a) => {
     a.addEventListener("click", (e) => {
       e.preventDefault();
       activateTab(a.dataset.tab);

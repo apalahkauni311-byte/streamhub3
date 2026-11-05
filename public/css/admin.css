@@ -235,3 +235,23 @@ table.data-table td.title-cell { white-space: normal; max-width: 260px; }
 .perf-score-row .perf-label { display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 4px; }
 .perf-score-bar-bg { background: var(--bg-elevated); border-radius: 999px; height: 8px; overflow: hidden; }
 .perf-score-bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent), #ff8080); border-radius: 999px; transition: width 0.6s ease; }
+
+/* Tombol Lihat Situs */
+.admin-nav a.view-site-link { margin-top: auto; }
+.admin-nav a.view-site-link + button.logout-btn { margin-top: 4px; }
+.topbar-actions { display: flex; align-items: center; gap: 12px; }
+.btn-view-site {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 8px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 0.82rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+.btn-view-site:hover { background: var(--accent); color: #fff; }
+@media (max-width: 420px) { #adminUsername { display: none; } }
